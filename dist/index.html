@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="theme-color" content="#1b5e20">
+  <meta name="description" content="Cantina Fácil - Aplicativo de pedidos e cardápio da cantina escolar com funcionamento offline e instalação PWA">
+  
+  <!-- Configurações PWA -->
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Cantina Fácil">
+
+  <title>Cantina Fácil - Lanches Escolares</title>
+  <link rel="stylesheet" href="./src/styles.css">
+</head>
+<body>
+
+  <!-- Alerta de Conexão Offline -->
+  <div id="offline-status-banner" class="offline-banner" role="status" aria-live="polite">
+    📡 Você está offline. O cardápio e os pedidos continuam funcionando neste aparelho!
+  </div>
+
+  <!-- Banner de Instalação PWA no Topo -->
+  <div id="pwa-install-banner" class="pwa-banner" style="display: none;">
+    <div class="pwa-banner-content">
+      <div class="pwa-banner-icon">📲</div>
+      <div>
+        <div class="pwa-banner-title">Instalar Cantina Fácil</div>
+        <div class="pwa-banner-sub">Acesse direto da sua tela inicial, mesmo sem internet</div>
+      </div>
+    </div>
+    <div class="pwa-banner-actions">
+      <button class="btn btn-sm btn-accent" id="btn-banner-install">Instalar</button>
+      <button class="btn-icon-header" id="btn-banner-close" aria-label="Fechar">✕</button>
+    </div>
+  </div>
+
+  <!-- Cabeçalho Principal -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-wrapper" title="Ir para a página inicial">
+        <img src="./icons/logo.svg" alt="Logotipo Cantina Fácil" class="brand-logo-img">
+        <span class="brand-title">Cantina<span>Fácil</span></span>
+      </div>
+
+      <div class="header-controls">
+        <div id="network-badge" class="network-badge online" title="Status de conexão">
+          <span class="network-dot"></span> Online
+        </div>
+        <button id="btn-pwa-install" class="btn btn-sm btn-accent" style="display: none;" title="Instalar aplicativo">
+          📲 Instalar
+        </button>
+        <button id="btn-pwa-help" class="btn-icon-header" title="Instruções de instalação" aria-label="Ajuda">
+          ℹ️
+        </button>
+        <button class="btn-icon-header" data-screen="admin" title="Painel da Cantina" aria-label="Admin da cantina">
+          ⚙️
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Container de Conteúdo Dinâmico -->
+  <main class="app-main">
+
+    <!-- TELA 1: CARDÁPIO (INÍCIO) -->
+    <section id="screen-menu" class="screen-view active">
+      <div class="hero-greeting">
+        <div class="greeting-text">
+          <h1>Olá! Que lanche vai querer hoje? 🥪</h1>
+          <p>Faça seu pedido com antecedência e retire rapidinho no balcão.</p>
+        </div>
+        <div class="greeting-badge">
+          🏫 Cantina Aberta
+        </div>
+      </div>
+
+      <!-- Barra de Busca -->
+      <div class="search-bar-wrap">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input 
+          type="search" 
+          id="search-input" 
+          class="search-input" 
+          placeholder="Buscar pão de queijo, coxinha, suco..."
+          autocomplete="off">
+      </div>
+
+      <!-- Carrossel de Categorias -->
+      <nav class="categories-slider" id="categories-slider" aria-label="Categorias de lanches">
+        <button class="category-chip active" data-category="todos">
+          ✨ Todos
+        </button>
+        <button class="category-chip" data-category="salgados">
+          🥟 Salgados
+        </button>
+        <button class="category-chip" data-category="lanches">
+          🥪 Lanches
+        </button>
+        <button class="category-chip" data-category="bebidas">
+          🧃 Bebidas
+        </button>
+        <button class="category-chip" data-category="doces">
+          🍫 Doces
+        </button>
+      </nav>
+
+      <!-- Lista de Produtos em Cards -->
+      <div id="products-container" class="products-grid">
+        <!-- Renderizado dinamicamente via src/products.js -->
+      </div>
+    </section>
+
+    <!-- TELA 2: CARRINHO E CHECKOUT -->
+    <section id="screen-cart" class="screen-view">
+      <div class="cart-layout">
+        <!-- Lista de Itens do Carrinho -->
+        <div class="cart-main-col">
+          <div id="cart-items-container">
+            <!-- Renderizado dinamicamente via src/cart.js -->
+          </div>
+        </div>
+
+        <!-- Formulário de Fechamento de Pedido -->
+        <aside class="cart-side-col" id="cart-summary-section" style="display: none;">
+          <div class="checkout-card">
+            <h3>Finalizar Pedido</h3>
+
+            <form id="checkout-form">
+              <div class="form-group">
+                <label for="checkout-name">Seu Nome ou Apelido: *</label>
+                <input 
+                  type="text" 
+                  id="checkout-name" 
+                  class="form-control" 
+                  placeholder="Ex: João Silva (3º Ano A)" 
+                  required 
+                  maxlength="50">
+              </div>
+
+              <div class="form-group">
+                <label for="checkout-pickup">Horário da Retirada: *</label>
+                <select id="checkout-pickup" class="form-control" required>
+                  <option value="Retirada no Balcão (Imediata)">Retirada Imediata no Balcão</option>
+                  <option value="Intervalo da Manhã (10:00)">Intervalo da Manhã (10:00)</option>
+                  <option value="Almoço Escolar (12:00)">Almoço Escolar (12:00)</option>
+                  <option value="Intervalo da Tarde (15:30)">Intervalo da Tarde (15:30)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="checkout-notes">Observações (opcional):</label>
+                <input 
+                  type="text" 
+                  id="checkout-notes" 
+                  class="form-control" 
+                  placeholder="Ex: Suco bem gelado, sem cebola..." 
+                  maxlength="100">
+              </div>
+
+              <div class="checkout-summary-lines">
+                <div class="summary-row">
+                  <span>Subtotal:</span>
+                  <span id="cart-subtotal-val">R$ 0,00</span>
+                </div>
+                <div class="summary-row total-row">
+                  <span>Total a Pagar:</span>
+                  <span id="cart-total-val">R$ 0,00</span>
+                </div>
+              </div>
+
+              <p class="admin-subtext" style="margin-bottom: 14px;">
+                💡 <em>Pagamento realizado no balcão da cantina no momento da retirada.</em>
+              </p>
+
+              <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+                Confirmar Pedido
+              </button>
+            </form>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- TELA 3: MEUS PEDIDOS -->
+    <section id="screen-orders" class="screen-view">
+      <div class="admin-section-header">
+        <div>
+          <h2>Meus Pedidos Realizados</h2>
+          <p class="admin-subtext">Histórico e status de produção dos seus pedidos salvos no dispositivo.</p>
+        </div>
+      </div>
+
+      <div id="orders-history-container" class="orders-list">
+        <!-- Renderizado dinamicamente via src/orders.js -->
+      </div>
+    </section>
+
+    <!-- TELA 4: PAINEL ADMINISTRATIVO (CANTINA) -->
+    <section id="screen-admin" class="screen-view">
+      <div id="admin-container">
+        <!-- Renderizado dinamicamente via src/admin.js -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Menu Inferior Fixo (Mobile-First Bottom Navigation) -->
+  <nav class="bottom-nav" aria-label="Navegação do aplicativo">
+    <button class="nav-item active" data-screen="menu" aria-label="Cardápio">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+      </svg>
+      <span>Cardápio</span>
+    </button>
+
+    <button class="nav-item" data-screen="cart" aria-label="Carrinho de Compras">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="9" cy="21" r="1"></circle>
+        <circle cx="20" cy="21" r="1"></circle>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+      </svg>
+      <span>Carrinho</span>
+      <span class="nav-badge" id="nav-cart-badge" style="display: none;">0</span>
+    </button>
+
+    <button class="nav-item" data-screen="orders" aria-label="Meus Pedidos">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="16" y1="13" x2="8" y2="13"></line>
+        <line x1="16" y1="17" x2="8" y2="17"></line>
+        <polyline points="10 9 9 9 8 9"></polyline>
+      </svg>
+      <span>Pedidos</span>
+    </button>
+
+    <button class="nav-item" data-screen="admin" aria-label="Gestão Cantina">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+      <span>Cantina</span>
+    </button>
+  </nav>
+
+  <!-- MODAL: CONFIRMAÇÃO DE PEDIDO COM COMPROVANTE -->
+  <div class="modal-overlay" id="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="confirmation-modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="confirmation-modal-title">Comprovante do Pedido</h3>
+        <button class="modal-close" aria-label="Fechar">✕</button>
+      </div>
+      <div id="confirmation-modal-content">
+        <!-- Preenchido dinamicamente via src/orders.js -->
+      </div>
+      <div style="margin-top: 16px;">
+        <button class="btn btn-primary" id="btn-close-confirmation" style="width: 100%;">
+          Ver Meus Pedidos
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CADASTRAR OU EDITAR PRODUTO NO ADMIN -->
+  <div class="modal-overlay" id="product-modal" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="product-modal-title">Produto</h3>
+        <button class="modal-close" aria-label="Fechar">✕</button>
+      </div>
+      <form id="product-form">
+        <div class="form-group">
+          <label for="prod-name-input">Nome do Produto: *</label>
+          <input type="text" id="prod-name-input" class="form-control" placeholder="Ex: Pastel de Forno" required>
+        </div>
+
+        <div class="form-group">
+          <label for="prod-price-input">Preço (R$): *</label>
+          <input type="number" id="prod-price-input" class="form-control" step="0.10" min="0" placeholder="5.50" required>
+        </div>
+
+        <div class="form-group">
+          <label for="prod-cat-input">Categoria: *</label>
+          <select id="prod-cat-input" class="form-control" required>
+            <option value="salgados">Salgados</option>
+            <option value="lanches">Lanches</option>
+            <option value="bebidas">Bebidas</option>
+            <option value="doces">Doces</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="prod-icon-input">Ilustração / Ícone:</label>
+          <select id="prod-icon-input" class="form-control">
+            <option value="pao-de-queijo">Pão de Queijo</option>
+            <option value="coxinha">Coxinha</option>
+            <option value="sanduiche">Sanduíche Natural</option>
+            <option value="suco">Suco de Fruta</option>
+            <option value="agua">Água Mineral</option>
+            <option value="bolo">Bolo de Chocolate</option>
+            <option value="default">Prato Cantina Padrão</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="prod-desc-input">Descrição dos Ingredientes:</label>
+          <textarea id="prod-desc-input" class="form-control" rows="2" placeholder="Descreva os ingredientes ou tamanho da porção"></textarea>
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="prod-avail-input" checked style="width: 18px; height: 18px;">
+          <label for="prod-avail-input" style="margin-bottom: 0; cursor: pointer;">Produto disponível para pedidos</label>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 18px;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;">Salvar Produto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: INSTRUÇÕES DE INSTALAÇÃO PWA -->
+  <div class="modal-overlay" id="install-help-modal" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="help-modal-title">Como Instalar no seu Aparelho</h3>
+        <button class="modal-close" aria-label="Fechar">✕</button>
+      </div>
+
+      <div class="install-step-item">
+        <div class="install-step-num">1</div>
+        <div class="install-step-text">
+          <h4>No Android (Google Chrome)</h4>
+          <p>Toque no menu de <strong>três pontinhos (⋮)</strong> no canto superior do navegador e selecione <strong>"Instalar aplicativo"</strong> ou <strong>"Adicionar à tela inicial"</strong>.</p>
+        </div>
+      </div>
+
+      <div class="install-step-item">
+        <div class="install-step-num">2</div>
+        <div class="install-step-text">
+          <h4>No Computador (Edge ou Chrome)</h4>
+          <p>Clique no ícone de <strong>instalar (computador com seta)</strong> localizado no lado direito da barra de endereços (onde digita a URL) ou no botão <strong>"Instalar"</strong> no topo da página.</p>
+        </div>
+      </div>
+
+      <div class="install-step-item">
+        <div class="install-step-num">3</div>
+        <div class="install-step-text">
+          <h4>No iPhone / iPad (Safari)</h4>
+          <p>Toque no botão <strong>Compartilhar (ícone com seta para cima)</strong> no rodapé do Safari e escolha <strong>"Adicionar à Tela de Início"</strong>.</p>
+        </div>
+      </div>
+
+      <div class="alert-offline-notice">
+        ✨ <strong>Vantagem do PWA:</strong> Uma vez instalado, o aplicativo abre em tela cheia como um app nativo e funciona mesmo se o sinal do celular cair no recreio!
+      </div>
+    </div>
+  </div>
+
+  <!-- Container de Notificações Toast -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- Código JavaScript Modular -->
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

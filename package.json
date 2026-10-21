@@ -1,0 +1,25 @@
+{
+  "name": "cantina-facil",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cantina Fácil - Progressive Web App (PWA) instalável para cantina escolar com funcionamento offline e IndexedDB",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build": "node build.js",
+    "preview": "node server.js --dist",
+    "icons": "node scripts/generate-icons.js",
+    "test": "node test/verify-pwa.js"
+  },
+  "keywords": [
+    "pwa",
+    "cantina",
+    "offline-first",
+    "indexeddb",
+    "service-worker",
+    "mobile-first"
+  ],
+  "author": "Cantina Fácil Team",
+  "license": "MIT"
+}
